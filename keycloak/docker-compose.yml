@@ -1,0 +1,61 @@
+networks:
+    keycloak:
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 7080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7080/health/ready"]
+      interval: 15s
+      timeout: 2s
+      retries: 15
+    command: ["start-dev", "--http-port", "7080", "--https-port", "7443"]
+    ports:
+      - "7080:7080"
+      - "7443:7443"
+    networks:
+      - local_network
+
+    db:
+        image: mysql:9.4
+        container_name: ${APP_NAME}_db
+        platform: linux/x86_64
+        restart: unless-stopped
+        tty: true
+#        ports:
+#            - "${DB_PORT}:3306"
+        environment:
+            MYSQL_DATABASE: '${MYSQL_DATABASE}'
+            MYSQL_USER: '${MYSQL_USER}'
+            MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+            MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+            SERVICE_TAGS: '${SERVICE_TAGS}'
+            SERVICE_NAME: '${SERVICE_NAME}'
+            MYSQL_ROOT_HOST: '%'
+        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_slovenian_ci']
+        volumes:
+            - db:/var/lib/mysql
+        networks:
+            - ${NETWORK}
+
+    phpmyadmin:
+        image: phpmyadmin:5.2
+        container_name: ${APP_NAME}_phpmyadmin
+        networks:
+            - ${NETWORK}
+        environment:
+            MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+            MYSQL_USER: '${MYSQL_USER}'
+            MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+            # PMA_PORT: '${DB_PORT}'
+            PMA_PORT: 3306
+        ports:
+            - "${PHPMYADMIN_PORT}:80"
