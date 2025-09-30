@@ -1,0 +1,21 @@
+networks:
+    nutrients:
+
+services:
+    angular:
+        build: ./angular
+        container_name: angular-app
+        ports:
+          - '${APP_PORT}:4200'
+        volumes:
+            - '${CODE_DIR}:${APP_DIR}'
+        environment:
+          - STYLE=css
+
+# docker compose run --rm angular ng new nutrients --routing=true --standalone=false --strict=true --style=scss
+# docker compose run --rm angular /bin/sh -c "mv nutrients/* ."
+# docker compose run --rm angular /bin/sh -c "mv nutrients/.* ."
+# docker compose run --rm angular /bin/sh -c "rm -rf nutrients"
+# docker compose run --rm angular ng serve --host 0.0.0.0 --port 4200
+
+
