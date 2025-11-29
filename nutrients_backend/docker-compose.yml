@@ -7,6 +7,7 @@ volumes:
     airflow_data:
     zinc_data:
     qdrant_data:
+    ollama_data:
 
 services:
     app:
@@ -159,5 +160,19 @@ services:
             - qdrant_data:/qdrant/storage
         ports:
             - "${QDRANT_API_PORT}:6333"
+        networks:
+            - ${NETWORK}
+
+    ollama:
+        image: ollama/ollama:latest
+        container_name: ${APP_NAME}_ollama
+        restart: unless-stopped
+        environment:
+            OLLAMA_MODEL: "llama-3.18b"   # choose the model you want
+            OLLAMA_PORT: 11434
+        volumes:
+            - ollama_data:/data
+        ports:
+            - "${LLM_PORT}:11434"
         networks:
             - ${NETWORK}

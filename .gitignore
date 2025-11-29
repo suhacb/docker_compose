@@ -1,2 +1,5 @@
 # Ignore environment files
 **/.env
+
+# Ignore ollama models
+nutrients_backend/ollama/
