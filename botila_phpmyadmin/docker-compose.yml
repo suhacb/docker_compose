@@ -1,0 +1,17 @@
+networks:
+    botila:
+
+services:
+    phpmyadmin:
+        image: phpmyadmin:5.2
+        container_name: ${APP_NAME}_phpmyadmin
+        networks:
+            - ${NETWORK}
+        environment:
+            - PMA_HOST=${HOST}
+            - PMA_PORT=${PORT}
+            - MYSQL_USER=${USER}
+            - PMA_PASSWORD=${PASSWORD}
+            - PMA_ARBITRARY=1
+        ports:
+            - "${PHPMYADMIN_PORT}:80"
