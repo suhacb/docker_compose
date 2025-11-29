@@ -6,6 +6,7 @@ volumes:
     postgres_data:
     airflow_data:
     zinc_data:
+    qdrant_data:
 
 services:
     app:
@@ -145,5 +146,18 @@ services:
             - zinc_data:/data
         ports:
             - "${ZINC_PORT}:4080"
+        networks:
+            - ${NETWORK}
+
+    qdrant:
+        image: qdrant/qdrant:v1.3.2
+        container_name: ${APP_NAME}_qdrant
+        restart: unless-stopped
+        environment:
+            QDRANT__SERVICE__API_PORT: 6333
+        volumes:
+            - qdrant_data:/qdrant/storage
+        ports:
+            - "${QDRANT_API_PORT}:6333"
         networks:
             - ${NETWORK}
