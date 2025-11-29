@@ -118,7 +118,9 @@ services:
             _PIP_ADDITIONAL_REQUIREMENTS: ""
         volumes:
             - airflow_data:/opt/airflow
-            - ${AIRFLOW_DIR}:/opt/airflow/dags
+            - ${AIRFLOW_DIR}/dags:/opt/airflow/dags
+            - ${AIRFLOW_DIR}/logs:/opt/airflow/logs
+            - ${AIRFLOW_DIR}/plugins:/opt/airflow/plugins
         ports:
             - "${AIRFLOW_PORT}:8080"
         networks:
