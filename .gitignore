@@ -2,4 +2,4 @@
 **/.env
 
 # Ignore ollama models
-./nutrients_backend/ollama
+nutrients_backend/ollama/
