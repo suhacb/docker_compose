@@ -3,6 +3,8 @@ networks:
 
 volumes:
     db:
+    postgres_data:
+    airflow_data:
 
 services:
     app:
@@ -27,8 +29,6 @@ services:
         platform: linux/x86_64
         restart: unless-stopped
         tty: true
-#        ports:
-#            - "${DB_PORT}:3306"
         environment:
             MYSQL_DATABASE: '${MYSQL_DATABASE}'
             MYSQL_USER: '${MYSQL_USER}'
@@ -52,7 +52,6 @@ services:
             MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
             MYSQL_USER: '${MYSQL_USER}'
             MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
-            # PMA_PORT: '${DB_PORT}'
             PMA_PORT: 3306
         ports:
             - "${PHPMYADMIN_PORT}:80"
@@ -68,8 +67,6 @@ services:
             - TIMEZONE=${TIMEZONE}
         volumes:
             - ${CODE_DIR}:${APP_DIR}
-#        ports:
-#            - "${PHP_PORT}:9000"
         networks:
             - ${NETWORK}
 
@@ -88,3 +85,50 @@ services:
         entrypoint: ['php', '${APP_DIR}/artisan']
         networks:
             - ${NETWORK}
+
+    airflow_postgres:
+        image: postgres:15
+        container_name: ${APP_NAME}_airflow_postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - ${NETWORK}
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            interval: 5s
+            retries: 5
+
+    airflow:
+        image: apache/airflow:2.10.2
+        container_name: ${APP_NAME}_airflow
+        restart: always
+        depends_on:
+            airflow_postgres:
+                condition: service_healthy
+        environment:
+            AIRFLOW__CORE__EXECUTOR: LocalExecutor
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${APP_NAME}_airflow_postgres:5432/${POSTGRES_DB}
+            AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+            AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+            AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+            _PIP_ADDITIONAL_REQUIREMENTS: ""
+        volumes:
+            - airflow_data:/opt/airflow
+            - ${AIRFLOW_DIR}/dags:/opt/airflow/dags
+            - ${AIRFLOW_DIR}/logs:/opt/airflow/logs
+            - ${AIRFLOW_DIR}/plugins:/opt/airflow/plugins
+        ports:
+            - "${AIRFLOW_PORT}:8080"
+        networks:
+            - ${NETWORK}
+        command: >
+            bash -c "
+                airflow db upgrade &&
+                airflow users create --username ${AIRFLOW_USER} --password ${AIRFLOW_PASSWORD} --firstname Air --lastname Flow --role Admin --email admin@example.com &&
+                airflow scheduler &
+                exec airflow webserver
+            "
