@@ -31,7 +31,7 @@ services:
         image: mysql:9.4
         container_name: ${APP_NAME}_db
         platform: linux/x86_64
-        restart: unless-stopped
+        restart: no
         tty: true
         environment:
             MYSQL_DATABASE: '${MYSQL_DATABASE}'
@@ -109,7 +109,7 @@ services:
     airflow:
         image: apache/airflow:2.10.2
         container_name: ${APP_NAME}_airflow
-        restart: always
+        restart: no
         depends_on:
             airflow_postgres:
                 condition: service_healthy
@@ -139,7 +139,7 @@ services:
     zincsearch:
         image: public.ecr.aws/zinclabs/zincsearch:latest
         container_name: ${APP_NAME}_zincsearch
-        restart: unless-stopped
+        restart: no
         environment:
             ZINC_FIRST_ADMIN_USER: ${ZINC_USER}
             ZINC_FIRST_ADMIN_PASSWORD: ${ZINC_PASSWORD}
@@ -154,7 +154,7 @@ services:
     qdrant:
         image: qdrant/qdrant:v1.3.2
         container_name: ${APP_NAME}_qdrant
-        restart: unless-stopped
+        restart: no
         environment:
             QDRANT__SERVICE__API_PORT: 6333
         volumes:
@@ -167,7 +167,7 @@ services:
     ollama:
         image: ollama/ollama:latest
         container_name: ${APP_NAME}_ollama
-        restart: unless-stopped
+        restart: no
         environment:
             OLLAMA_MODEL: "llama-3.18b"   # choose the model you want
             OLLAMA_PORT: 11434
@@ -182,7 +182,7 @@ services:
     rabbitmq:
         image: rabbitmq:3-management
         container_name: ${APP_NAME}_rabbitmq
-        restart: unless-stopped
+        restart: no
         environment:
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}

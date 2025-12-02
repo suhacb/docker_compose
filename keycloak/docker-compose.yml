@@ -35,7 +35,7 @@ services:
     image: mysql:9.4
     container_name: ${APP_NAME}_db
     platform: linux/x86_64
-    restart: unless-stopped
+    restart: no
     environment:
       MYSQL_DATABASE: '${MYSQL_DATABASE}'
       MYSQL_USER: '${MYSQL_USER}'
