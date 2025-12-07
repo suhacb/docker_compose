@@ -21,6 +21,7 @@ RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql
 # RUN php -m
 
 RUN printf '[PHP]\ndate.timezone = "${TIMEZONE}"\n' > /usr/local/etc/php/conf.d/tzone.ini
+RUN echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
 
 WORKDIR $workdir
 EXPOSE 9000
