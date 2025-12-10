@@ -1,6 +1,9 @@
 networks:
     nutrients:
 
+volumes:
+  nutrients_node_modules_cache:
+
 services:
     app:
         build: ./angular
@@ -9,6 +12,7 @@ services:
           - '${APP_PORT}:4200'
         volumes:
             - '${CODE_DIR}:${APP_DIR}'
+            - 'nutrients_node_modules_cache:${APP_DIR}/node_modules'
         environment:
           - STYLE=css
     npm:
@@ -20,6 +24,7 @@ services:
         container_name: ${APP_NAME}_npm
         volumes:
             - ${CODE_DIR}:${APP_DIR}
+            - 'nutrients_node_modules_cache:${APP_DIR}/node_modules'
         entrypoint: ['npm']
 
 # docker compose run --rm app ng new nutrients --routing=true --standalone=false --strict=true --style=scss

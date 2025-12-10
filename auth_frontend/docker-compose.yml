@@ -1,6 +1,9 @@
 networks:
     auth:
 
+volumes:
+  auth_node_modules_cache:
+
 services:
     app:
         build: ./angular
@@ -9,6 +12,7 @@ services:
          - '${APP_PORT}:4200'
         volumes:
             - '${CODE_DIR}:${APP_DIR}'
+            - 'auth_node_modules_cache:${APP_DIR}/node_modules'
         environment:
           - STYLE=css
         networks:
@@ -22,6 +26,7 @@ services:
         container_name: ${APP_NAME}_npm
         volumes:
             - ${CODE_DIR}:${APP_DIR}
+            - 'auth_node_modules_cache:${APP_DIR}/node_modules'
         entrypoint: ['npm']
 
 # docker compose run --rm app ng new auth --routing=true --standalone=false --strict=true --style=scss
