@@ -3,7 +3,13 @@ networks:
 
 services:
     app:
-        build: ./angular
+        build:
+            context: ./angular
+            dockerfile: Dockerfile
+            args:
+                - workdir=${APP_DIR}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_app
         ports:
          - '${APP_PORT}:4200'
@@ -19,9 +25,13 @@ services:
             dockerfile: Dockerfile
             args:
                 - workdir=${APP_DIR}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_npm
         volumes:
             - ${CODE_DIR}:${APP_DIR}
+        environment:
+        - NPM_CONFIG_CACHE=/tmp/.npm
         entrypoint: ['npm']
 
 # docker compose run --rm app ng new auth --routing=true --standalone=false --strict=true --style=scss
