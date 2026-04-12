@@ -25,9 +25,10 @@ services:
         image: mysql:9.4
         container_name: ${APP_NAME}_db
         platform: linux/x86_64
-        restart: unless-stopped
+        restart: no
         tty: true
         environment:
+            TZ: "UTC"
             MYSQL_DATABASE: '${MYSQL_DATABASE}'
             MYSQL_USER: '${MYSQL_USER}'
             MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
@@ -71,6 +72,9 @@ services:
             dockerfile: Dockerfile
             args:
                 - workdir=${APP_DIR}
+                - TIMEZONE=${TIMEZONE}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_php
         environment:
             - TIMEZONE=${TIMEZONE}
@@ -85,7 +89,12 @@ services:
             dockerfile: Dockerfile
             args:
                 - workdir=${APP_DIR}
+                - TIMEZONE=${TIMEZONE}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_artisan
+        environment:
+            - TIMEZONE=${TIMEZONE}
         volumes:
             - ${CODE_DIR}:${APP_DIR}
         working_dir: ${APP_DIR}

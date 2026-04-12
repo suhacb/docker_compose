@@ -1,6 +1,13 @@
 # FROM php:fpm-alpine3.16
 FROM php:8.3-fpm-alpine
 ARG workdir
+ARG TIMEZONE=UTC
+ARG PUID=1000
+ARG PGID=1000
+
+# If you are running Linux, uncomment the next line.
+RUN apk add --no-cache shadow
+RUN groupmod -g ${PGID} www-data && usermod  -u ${PUID} -g ${PGID} www-data
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
@@ -25,6 +32,3 @@ RUN printf '[PHP]\ndate.timezone = "${TIMEZONE}"\n' > /usr/local/etc/php/conf.d/
 
 WORKDIR $workdir
 EXPOSE 9000
-
-# If you are running Linux, uncomment the next line.
-# RUN apk add shadow && usermod -u 1000 www-data && groupmod -g 1000 www-data
