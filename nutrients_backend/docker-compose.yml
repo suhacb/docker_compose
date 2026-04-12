@@ -3,12 +3,7 @@ networks:
 
 volumes:
     db:
-    postgres_data:
-    airflow_data:
-    zinc_data:
-    qdrant_data:
-    ollama_data:
-    rabbitmq_data:
+    zincdb:
 
 services:
     app:
@@ -91,107 +86,16 @@ services:
         entrypoint: ['php', '${APP_DIR}/artisan']
         networks:
             - ${NETWORK}
-
-    airflow_postgres:
-        image: postgres:15
-        container_name: ${APP_NAME}_airflow_postgres
-        environment:
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            POSTGRES_DB: ${POSTGRES_DB}
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        networks:
-            - ${NETWORK}
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-            interval: 5s
-            retries: 5
-
-    airflow:
-        image: apache/airflow:2.10.2
-        container_name: ${APP_NAME}_airflow
-        restart: no
-        depends_on:
-            airflow_postgres:
-                condition: service_healthy
-        environment:
-            AIRFLOW__CORE__EXECUTOR: LocalExecutor
-            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${APP_NAME}_airflow_postgres:5432/${POSTGRES_DB}
-            AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-            AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
-            AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
-            _PIP_ADDITIONAL_REQUIREMENTS: ""
-        volumes:
-            - airflow_data:/opt/airflow
-            - ${AIRFLOW_DIR}/dags:/opt/airflow/dags
-            - ${AIRFLOW_DIR}/logs:/opt/airflow/logs
-            - ${AIRFLOW_DIR}/plugins:/opt/airflow/plugins
-        ports:
-            - "${AIRFLOW_PORT}:8080"
-        networks:
-            - ${NETWORK}
-        command: >
-            bash -c "
-                airflow db upgrade &&
-                airflow users create --username ${AIRFLOW_USER} --password ${AIRFLOW_PASSWORD} --firstname Air --lastname Flow --role Admin --email admin@example.com &&
-                airflow scheduler &
-                exec airflow webserver
-            "
-    zincsearch:
+    zincdb:
         image: public.ecr.aws/zinclabs/zincsearch:latest
-        container_name: ${APP_NAME}_zincsearch
-        restart: no
+        container_name: ${APP_NAME}_zincdb
         environment:
-            ZINC_FIRST_ADMIN_USER: ${ZINC_USER}
-            ZINC_FIRST_ADMIN_PASSWORD: ${ZINC_PASSWORD}
-            ZINC_DATA_PATH: /data
-        volumes:
-            - zinc_data:/data
+            ZINC_DATA_PATH: ${ZINC_DATA_PATH}
+            ZINC_FIRST_ADMIN_USER: ${ZINC_FIRST_ADMIN_USER}
+            ZINC_FIRST_ADMIN_PASSWORD: ${ZINC_FIRST_ADMIN_PASSWORD}
         ports:
             - "${ZINC_PORT}:4080"
-        networks:
-            - ${NETWORK}
-
-    qdrant:
-        image: qdrant/qdrant:v1.3.2
-        container_name: ${APP_NAME}_qdrant
-        restart: no
-        environment:
-            QDRANT__SERVICE__API_PORT: 6333
         volumes:
-            - qdrant_data:/qdrant/storage
-        ports:
-            - "${QDRANT_API_PORT}:6333"
-        networks:
-            - ${NETWORK}
-
-    # ollama:
-    #     image: ollama/ollama:latest
-    #     container_name: ${APP_NAME}_ollama
-    #     restart: no
-    #     environment:
-    #         OLLAMA_MODEL: "llama-3.18b"   # choose the model you want
-    #         OLLAMA_PORT: 11434
-    #     volumes:
-    #         - ollama_data:/data
-    #         - ./ollama:/root/.ollama/models
-    #     ports:
-    #         - "${LLM_PORT}:11434"
-    #     networks:
-    #         - ${NETWORK}
-    # 
-    rabbitmq:
-        image: rabbitmq:3-management
-        container_name: ${APP_NAME}_rabbitmq
-        restart: no
-        environment:
-            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-        ports:
-            - "${RABBITMQ_AMQP_PORT}:5672"      # AMQP port
-            - "${RABBITMQ_MANAGEMENT_PORT}:15672"    # Management UI
-        volumes:
-            - rabbitmq_data:/var/lib/rabbitmq   # persist queues
+            - zincdb:${ZINC_DATA_PATH}
         networks:
             - ${NETWORK}
