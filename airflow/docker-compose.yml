@@ -1,0 +1,69 @@
+networks:
+    airflow:
+
+volumes:
+    postgres_data:
+
+services:
+    airflow_postgres:
+        image: postgres:15
+        container_name: ${APP_NAME}_airflow_postgres
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - ${NETWORK}
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            interval: 5s
+            retries: 5
+
+    airflow_init:
+        image: apache/airflow:2.10.2
+        container_name: ${APP_NAME}_airflow_init
+        user: "0:0"
+        volumes:
+            - ${AIRFLOW_DIR}/dags:/opt/airflow/dags
+            - ${AIRFLOW_DIR}/logs:/opt/airflow/logs
+            - ${AIRFLOW_DIR}/plugins:/opt/airflow/plugins
+        command: >
+            bash -c "
+                chown -R ${AIRFLOW_UID}:0 /opt/airflow/dags /opt/airflow/logs /opt/airflow/plugins &&
+                chmod -R 775 /opt/airflow/dags /opt/airflow/logs /opt/airflow/plugins
+            "
+
+    airflow:
+        image: apache/airflow:2.10.2
+        container_name: ${APP_NAME}_airflow
+        restart: no
+        depends_on:
+            airflow_postgres:
+                condition: service_healthy
+            airflow_init:
+                condition: service_completed_successfully
+        environment:
+            AIRFLOW__CORE__EXECUTOR: LocalExecutor
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${APP_NAME}_airflow_postgres:5432/${POSTGRES_DB}
+            AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+            AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+            AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+            _PIP_ADDITIONAL_REQUIREMENTS: ""
+        volumes:
+            - ${AIRFLOW_DIR}/dags:/opt/airflow/dags
+            - ${AIRFLOW_DIR}/logs:/opt/airflow/logs
+            - ${AIRFLOW_DIR}/plugins:/opt/airflow/plugins
+        ports:
+            - "${AIRFLOW_PORT}:8080"
+        user: "${AIRFLOW_UID}:0"
+        networks:
+            - ${NETWORK}
+        command: >
+            bash -c "
+                airflow db upgrade &&
+                airflow users create --username ${AIRFLOW_USER} --password ${AIRFLOW_PASSWORD} --firstname Air --lastname Flow --role Admin --email admin@example.com &&
+                airflow scheduler &
+                exec airflow webserver
+            "
