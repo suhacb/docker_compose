@@ -4,6 +4,8 @@ set -euo pipefail
 # List of subdirectories in startup order
 SERVICES=(
   "keycloak"
+  "airflow"
+  "fooddata"
   "auth_backend"
   "nutrients_backend"
   "auth_frontend"
