@@ -8,6 +8,7 @@ services:
     airflow_postgres:
         image: postgres:15
         container_name: ${APP_NAME}_airflow_postgres
+        restart: no
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -24,6 +25,7 @@ services:
     airflow_init:
         image: apache/airflow:2.10.2
         container_name: ${APP_NAME}_airflow_init
+        restart: no
         user: "0:0"
         volumes:
             - ${AIRFLOW_DIR}/dags:/opt/airflow/dags

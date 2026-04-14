@@ -11,6 +11,7 @@ services:
             context: ./nginx
             dockerfile: Dockerfile
         container_name: ${APP_NAME}_app
+        restart: no
         ports:
             - "${APP_PORT}:80"
         volumes:
@@ -45,6 +46,7 @@ services:
     phpmyadmin:
         image: phpmyadmin:5.2
         container_name: ${APP_NAME}_phpmyadmin
+        restart: no
         networks:
             - ${NETWORK}
         environment:
@@ -61,7 +63,11 @@ services:
             dockerfile: Dockerfile
             args:
                 - workdir=${APP_DIR}
+                - TIMEZONE=${TIMEZONE}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_php
+        restart: no
         environment:
             - TIMEZONE=${TIMEZONE}
         volumes:
@@ -77,7 +83,11 @@ services:
             dockerfile: Dockerfile
             args:
                 - workdir=${APP_DIR}
+                - TIMEZONE=${TIMEZONE}
+                - PUID=${PUID}
+                - PGID=${PGID}
         container_name: ${APP_NAME}_artisan
+        restart: no
         volumes:
             - ${CODE_DIR}:${APP_DIR}
         depends_on:
@@ -89,6 +99,7 @@ services:
     zincdb:
         image: public.ecr.aws/zinclabs/zincsearch:latest
         container_name: ${APP_NAME}_zincdb
+        restart: no
         environment:
             ZINC_DATA_PATH: ${ZINC_DATA_PATH}
             ZINC_FIRST_ADMIN_USER: ${ZINC_FIRST_ADMIN_USER}
