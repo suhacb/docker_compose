@@ -4,8 +4,8 @@ ARG TIMEZONE=UTC
 ARG PUID=1000
 ARG PGID=1000
 
-RUN apk add --no-cache shadow
-RUN groupmod -g ${PGID} www-data && usermod -u ${PUID} -g ${PGID} www-data
+# RUN apk add --no-cache shadow
+# RUN groupmod -g ${PGID} www-data && usermod -u ${PUID} -g ${PGID} www-data
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
