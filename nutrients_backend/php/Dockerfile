@@ -31,3 +31,6 @@ RUN echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.in
 
 WORKDIR $workdir
 EXPOSE 9000
+
+# If you are running Linux, uncomment the next line.
+# RUN apk add shadow && usermod -u 1000 www-data && groupmod -g 1000 www-data
