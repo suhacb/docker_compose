@@ -11,6 +11,7 @@ services:
                 - PUID=${PUID}
                 - PGID=${PGID}
         container_name: ${APP_NAME}_app
+        restart: no
         ports:
          - '${APP_PORT}:4200'
         volumes:
@@ -28,6 +29,7 @@ services:
                 - PUID=${PUID}
                 - PGID=${PGID}
         container_name: ${APP_NAME}_npm
+        restart: no
         volumes:
             - ${CODE_DIR}:${APP_DIR}
         environment:
