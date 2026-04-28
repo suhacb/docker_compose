@@ -1,0 +1,36 @@
+{
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": "43784d0aa9059746c64fccd42da5ad8b07b000cad992c061"
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:9050",
+        "http://127.0.0.1:9050"
+      ]
+    }
+  },
+  "models": {
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "models": [
+          { "id": "gemma4:e4b", "name": "Gemma 4 4B", "api": "openai-completions", "contextWindow": 32768 },
+          { "id": "gemma4:26b", "name": "Gemma 4 26B", "api": "openai-completions", "contextWindow": 16384 },
+          { "id": "gemma4:31b", "name": "Gemma 4 31B", "api": "openai-completions", "contextWindow": 16384 }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": "ollama/gemma4:e4b",
+      "timeoutSeconds": 300
+    }
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.4.25",
+    "lastTouchedAt": "2026-04-28T05:49:51.194Z"
+  }
+}

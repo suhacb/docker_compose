@@ -1,0 +1,64 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: openclaw-nginx
+    restart: no
+    ports:
+      - "${OPENCLAW_UI_PORT}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - openclaw
+    networks:
+      - openclaw
+
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: no
+    ports:
+      - "${OPENCLAW_PORT}:3000"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - REDIS_URL=redis://redis:6379
+      - SEARXNG_URL=http://searxng:8080
+      - LOG_LEVEL=${LOG_LEVEL}
+      - OPENCLAW_GATEWAY_CONTROLUI_ALLOWEDORIGINS=${OPENCLAW_GATEWAY_CONTROLUI_ALLOWEDORIGINS}
+    entrypoint: ["sh", "-c", "cp /tmp/openclaw.json /home/node/.openclaw/openclaw.json; find /home/node/.openclaw/plugin-runtime-deps -name '*.lock' -type d -exec rm -rf {} + 2>/dev/null; exec docker-entrypoint.sh node openclaw.mjs gateway --allow-unconfigured"]
+    volumes:
+      - ${OPENCLAW_CODE_DIR}:/home/node/.openclaw
+      - ./openclaw.json:/tmp/openclaw.json:ro
+    depends_on:
+      - redis
+      - searxng
+    networks:
+      - openclaw
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: no
+    environment:
+      - BASE_URL=${SEARXNG_BASE_URL}
+      - INSTANCE_NAME=${SEARXNG_INSTANCE_NAME}
+    volumes:
+      - ${SEARXNG_CODE_DIR}:/etc/searxng   # optional config override
+    networks:
+      - openclaw
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - openclaw
+
+networks:
+  openclaw:
+
+volumes:
+  redis_data:
