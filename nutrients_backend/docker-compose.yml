@@ -99,3 +99,15 @@ services:
             - zincdb:${ZINC_DATA_PATH}
         networks:
             - ${NETWORK}
+
+    searxng:
+        image: searxng/searxng:latest
+        container_name: ${APP_NAME}_searxng
+        restart: no
+        volumes:                                                                                                          
+            - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+        environment:
+            - BASE_URL=${SEARXNG_BASE_URL}
+            - INSTANCE_NAME=${SEARXNG_INSTANCE_NAME}
+        networks:
+            - ${NETWORK}
