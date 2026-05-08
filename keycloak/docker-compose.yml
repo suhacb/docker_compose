@@ -16,6 +16,9 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
       KC_HEALTH_ENABLED: "${KC_HEALTH_ENABLED}"
       KC_LOG_LEVEL: "${KC_LOG_LEVEL}"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7080/health/ready"]
       interval: 15s

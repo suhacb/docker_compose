@@ -4,13 +4,10 @@ set -euo pipefail
 # List of subdirectories in startup order
 SERVICES=(
   "keycloak"
-  "airflow"
-  "fooddata"
   "auth_backend"
   "nutrients_backend"
   "auth_frontend"
   "nutrients_frontend"
-  "openclaw"   # ← added here (last)
 )
 
 # Check argument
@@ -39,24 +36,21 @@ else
   done
 fi
 
+# Start Ollama before nutrients_backend on "up"
+if [[ "$ACTION" == "up" ]]; then
+  echo "🧠 Starting Ollama (host service)..."
+  if ! pgrep -x "ollama" > /dev/null; then
+    ollama serve > /dev/null 2>&1 &
+    sleep 2
+    echo "✅ Ollama started."
+  else
+    echo "ℹ️  Ollama already running."
+  fi
+  echo
+fi
+
 # Run docker compose command for each service
 for SERVICE in "${ORDER[@]}"; do
-
-  # 🔥 Start Ollama BEFORE openclaw (only on "up")
-  if [[ "$ACTION" == "up" && "$SERVICE" == "openclaw" ]]; then
-    echo "🧠 Starting Ollama (host service)..."
-
-    if ! pgrep -x "ollama" > /dev/null; then
-      # Start Ollama in background
-      ollama serve > /dev/null 2>&1 &
-      sleep 2
-      echo "✅ Ollama started."
-    else
-      echo "ℹ️  Ollama already running."
-    fi
-
-    echo
-  fi
 
   echo "➡️  Processing $SERVICE ($ACTION)..."
 
