@@ -1,7 +1,6 @@
-FROM node:24-alpine3.21
+FROM node:24-bookworm
 ARG workdir
 WORKDIR ${workdir}
 
-RUN apk add --no-cache chromium && corepack enable
-
-ENV CHROME_BIN=/usr/bin/chromium-browser
+RUN apt-get update && apt-get install -y chromium && rm -rf /var/lib/apt/lists/*
+RUN npx -y playwright@1.60.0 install --with-deps chromium && corepack enable

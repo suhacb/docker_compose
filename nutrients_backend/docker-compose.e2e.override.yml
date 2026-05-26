@@ -1,0 +1,31 @@
+services:
+    php:
+        environment:
+            - APP_TEST_MODE=true
+            - DB_HOST=db
+            - DB_DATABASE=${MYSQL_DATABASE}
+            - DB_USERNAME=${MYSQL_USER}
+            - DB_PASSWORD=${MYSQL_PASSWORD}
+            - QUEUE_CONNECTION=sync
+            - ZINC_HOST=zincdb
+            - ZINC_PORT=4080
+            - ZINC_INDEX_PREFIX=e2e_
+
+    artisan:
+        environment:
+            - APP_TEST_MODE=true
+            - DB_HOST=db
+            - DB_DATABASE=${MYSQL_DATABASE}
+            - DB_USERNAME=${MYSQL_USER}
+            - DB_PASSWORD=${MYSQL_PASSWORD}
+            - QUEUE_CONNECTION=sync
+            - ZINC_HOST=zincdb
+            - ZINC_PORT=4080
+            - ZINC_INDEX_PREFIX=e2e_
+
+  # To start/stop the E2E stack:
+  # start
+  # docker compose -f docker-compose.yml -f docker-compose.e2e.override.yml --project-name nutrients_backend_e2e --env-file .env.e2e up -d
+    
+  # stop
+  # docker compose -f docker-compose.yml -f docker-compose.e2e.override.yml --project-name nutrients_backend_e2e --env-file .env.e2e down

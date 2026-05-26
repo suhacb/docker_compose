@@ -20,6 +20,8 @@ services:
         container_name: ${APP_NAME}_npm
         volumes:
             - ${CODE_DIR}:${APP_DIR}
+        environment:
+          - CHROME_BIN=${CHROME_BIN}
         entrypoint: ['npm']
 
 # docker compose run --rm app ng new nutrients --routing=true --standalone=false --strict=true --style=scss
