@@ -23,7 +23,7 @@ docker compose down
 
 ## Common Docker Commands per Service
 
-PHP/Laravel services (auth_backend, nutrients_backend, fooddata):
+PHP/Laravel services (auth_backend, nutrients_backend, ai_backend, fooddata):
 ```bash
 docker compose run --rm artisan migrate
 docker compose run --rm artisan migrate:fresh --seed
@@ -59,10 +59,15 @@ docker compose run --rm npm run [script]
 | Airflow | http://localhost:9030 | Airflow 2.10.2 + PostgreSQL 15 |
 | fooddata MongoDB | localhost:9045 | MongoDB 7 |
 | fooddata Mongo Express | http://localhost:9046 | |
+| ai_frontend | http://localhost:9060 | Vue 3 + Vite behind Nginx (Node 22 Alpine) |
+| ai_backend | http://localhost:9055 | PHP 8.3-FPM + Nginx + MySQL 9.4 |
+| ai_backend PHPMyAdmin | http://localhost:9056 | |
+| ai_backend Zinc Search | http://localhost:9057 | |
+| ai_backend Qdrant | http://localhost:9058 | vector DB |
 
 ### Network Isolation
 
-Each service group runs on its own Docker network (`auth`, `nutrients`, `keycloak`, `fooddata`, `airflow`). Services can only communicate within their network by default.
+Each service group runs on its own Docker network (`auth`, `nutrients`, `keycloak`, `fooddata`, `airflow`, `ai`). Services can only communicate within their network by default.
 
 ### PHP Container Pattern
 
@@ -77,8 +82,15 @@ PHP containers use `PUID`/`PGID` env vars to run as the host user (`www-data`, U
 
 ### Angular Container Pattern
 
-Both frontends follow the same structure:
+`auth_frontend` and `nutrients_frontend` follow this structure:
 - `app` — `ng serve` on internal port 4200, exposed on the service port
+- `npm` — one-off container for running npm commands
+
+### Vue Container Pattern
+
+`ai_frontend` uses Vue 3 + Vite behind an Nginx reverse proxy:
+- `nginx` — reverse proxy, exposed on the service port (9060), forwards to `app:5173` with WebSocket support for HMR
+- `app` — `npm run dev` on internal port 5173 (not exposed directly)
 - `npm` — one-off container for running npm commands
 
 ### Configuration Pattern
