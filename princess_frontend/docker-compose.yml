@@ -1,0 +1,30 @@
+networks:
+    princess:
+
+services:
+    app:
+        build: ./angular
+        container_name: ${APP_NAME}_app
+        ports:
+            - '${APP_PORT}:4200'
+        volumes:
+            - '${CODE_DIR}:${APP_DIR}'
+        environment:
+            - STYLE=css
+        networks:
+            - ${NETWORK}
+
+    npm:
+        build:
+            context: ./npm
+            dockerfile: Dockerfile
+            args:
+                - workdir=${APP_DIR}
+        container_name: ${APP_NAME}_npm
+        volumes:
+            - ${CODE_DIR}:${APP_DIR}
+        environment:
+            - CHROME_BIN=${CHROME_BIN}
+        entrypoint: ['npm']
+        networks:
+            - ${NETWORK}
