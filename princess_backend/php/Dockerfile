@@ -2,7 +2,7 @@ FROM php:8.4-fpm-alpine
 ARG workdir
 
 # Pinned Composer — no downloaded installer, no checksum verification needed
-COPY --from=composer:2 /usr/local/bin/composer /usr/local/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN apk add --no-cache \
         libpng \
