@@ -18,8 +18,10 @@ services:
             - "${CODE_DIR}:${APP_DIR}"
             - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
         depends_on:
-            - php
-            - db
+            php:
+                condition: service_started
+            db:
+                condition: service_healthy
         networks:
             - ${NETWORK}
 
@@ -38,6 +40,11 @@ services:
             - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
         networks:
             - ${NETWORK}
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
     pgadmin:
         image: dpage/pgadmin4:latest
@@ -61,6 +68,11 @@ services:
             - E2E_TOKEN=${E2E_TOKEN}
         volumes:
             - ${CODE_DIR}:${APP_DIR}
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
         networks:
             - ${NETWORK}
 
@@ -76,15 +88,33 @@ services:
         volumes:
             - ${CODE_DIR}:${APP_DIR}
         depends_on:
-            - db
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
         working_dir: ${APP_DIR}
         entrypoint: ['php', '${APP_DIR}/artisan']
         networks:
             - ${NETWORK}
 
+    redis:
+        image: redis:7-alpine
+        container_name: ${APP_NAME}_redis
+        restart: no
+        ports:
+            - "${REDIS_PORT}:6379"
+        networks:
+            - ${NETWORK}
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
     zincdb:
         image: public.ecr.aws/zinclabs/zincsearch:latest
         container_name: ${APP_NAME}_zincdb
+        restart: no
         environment:
             ZINC_DATA_PATH: ${ZINC_DATA_PATH}
             ZINC_FIRST_ADMIN_USER: ${ZINC_FIRST_ADMIN_USER}
@@ -95,13 +125,24 @@ services:
             - zincdb:${ZINC_DATA_PATH}
         networks:
             - ${NETWORK}
+        healthcheck:
+            test: ["CMD-SHELL", "wget -qO- http://localhost:4080/healthz | grep -q ok || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     qdrant:
         image: qdrant/qdrant:latest
         container_name: ${APP_NAME}_qdrant
+        restart: no
         ports:
             - "${QDRANT_HTTP_PORT}:6333"
         volumes:
             - qdrantdb:/qdrant/storage
         networks:
             - ${NETWORK}
+        healthcheck:
+            test: ["CMD-SHELL", "wget -qO- http://localhost:6333/healthz | grep -q ok || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 5

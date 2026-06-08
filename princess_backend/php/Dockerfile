@@ -1,13 +1,28 @@
 FROM php:8.4-fpm-alpine
 ARG workdir
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-RUN php -r "unlink('composer-setup.php');"
+# Pinned Composer — no downloaded installer, no checksum verification needed
+COPY --from=composer:2 /usr/local/bin/composer /usr/local/bin/composer
 
-RUN apk add --no-cache libpng libpng-dev && docker-php-ext-install gd && apk del libpng-dev
-RUN apk add --no-cache postgresql-dev
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN apk add --no-cache \
+        libpng \
+        libpng-dev \
+        postgresql-dev \
+        libzip-dev \
+        icu-dev \
+        linux-headers \
+    && docker-php-ext-install \
+        gd \
+        pdo \
+        pdo_pgsql \
+        pcntl \
+        zip \
+        bcmath \
+        intl \
+        opcache \
+    && apk del libpng-dev libzip-dev icu-dev \
+    && pecl install redis \
+    && docker-php-ext-enable redis opcache
 
 RUN echo 'date.timezone = "UTC"' > /usr/local/etc/php/conf.d/tzone.ini
 RUN echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
