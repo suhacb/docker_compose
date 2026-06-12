@@ -40,7 +40,7 @@ fi
 if [[ "$ACTION" == "up" ]]; then
   echo "🧠 Starting Ollama (host service)..."
   if ! pgrep -x "ollama" > /dev/null; then
-    ollama serve > /dev/null 2>&1 &
+    OLLAMA_HOST=0.0.0.0:11434 ollama serve > /dev/null 2>&1 &
     sleep 2
     echo "✅ Ollama started."
   else

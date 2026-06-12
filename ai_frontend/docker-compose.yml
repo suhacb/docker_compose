@@ -1,0 +1,52 @@
+networks:
+    ai:
+
+services:
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        container_name: ${APP_NAME}_nginx
+        ports:
+            - '${APP_PORT}:80'
+        volumes:
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - app
+        networks:
+            - ${NETWORK}
+
+    app:
+        build:
+            context: ./vue
+            dockerfile: Dockerfile
+            args:
+                - workdir=${APP_DIR}
+                - PUID=${PUID}
+                - PGID=${PGID}
+        container_name: ${APP_NAME}_app
+        volumes:
+            - '${CODE_DIR}:${APP_DIR}'
+        environment:
+            - NODE_ENV=development
+        networks:
+            - ${NETWORK}
+
+    npm:
+        build:
+            context: ./npm
+            dockerfile: Dockerfile
+            args:
+                - workdir=${APP_DIR}
+                - PUID=${PUID}
+                - PGID=${PGID}
+        container_name: ${APP_NAME}_npm
+        volumes:
+            - ${CODE_DIR}:${APP_DIR}
+        environment:
+            - NPM_CONFIG_CACHE=/tmp/.npm
+        entrypoint: ['npm']
+
+# docker compose run --rm npm create vite@latest . -- --template vue
+# docker compose run --rm npm install
+# docker compose up nginx
