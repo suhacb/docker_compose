@@ -5,10 +5,10 @@ ARG workdir
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN apk add --no-cache \
-        libpng \
-        libpng-dev \
+        autoconf g++ make \
+        libpng libpng-dev \
+        libzip libzip-dev \
         postgresql-dev \
-        libzip-dev \
         icu-dev \
         linux-headers \
     && docker-php-ext-install \
@@ -20,9 +20,9 @@ RUN apk add --no-cache \
         bcmath \
         intl \
         opcache \
-    && apk del libpng-dev libzip-dev icu-dev \
     && pecl install redis \
-    && docker-php-ext-enable redis opcache
+    && docker-php-ext-enable redis opcache \
+    && apk del autoconf g++ make libpng-dev libzip-dev icu-dev
 
 RUN echo 'date.timezone = "UTC"' > /usr/local/etc/php/conf.d/tzone.ini
 RUN echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
