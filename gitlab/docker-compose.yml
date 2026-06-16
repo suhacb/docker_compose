@@ -1,0 +1,50 @@
+networks:
+  gitlab:
+
+volumes:
+  config:
+  logs:
+  data:
+  runner:
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: ${APP_NAME}
+    restart: unless-stopped
+    hostname: localhost
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:${APP_PORT}'
+        gitlab_rails['initial_root_password'] = '${GITLAB_ROOT_PASSWORD}'
+        gitlab_rails['gitlab_shell_ssh_port'] = ${SSH_PORT}
+        gitlab_rails['time_zone'] = '${TZ}'
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+      - "${SSH_PORT}:22"
+    volumes:
+      - config:/etc/gitlab
+      - logs:/var/log/gitlab
+      - data:/var/opt/gitlab
+    shm_size: 256m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/-/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    networks:
+      - ${NETWORK}
+
+  gitlab_runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: ${APP_NAME}_runner
+    restart: unless-stopped
+    depends_on:
+      gitlab:
+        condition: service_healthy
+    volumes:
+      - runner:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ${NETWORK}
