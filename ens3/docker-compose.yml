@@ -1,0 +1,284 @@
+networks:
+  ens3:
+
+volumes:
+  postgres_data:
+  server_quarantine:
+  minio_data:
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: ens3_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "40020:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ens3
+
+  redis:
+    image: redis:7
+    container_name: ens3_redis
+    restart: unless-stopped
+    ports:
+      - "40021:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ens3
+
+  minio:
+    image: minio/minio:latest
+    container_name: ens3_minio
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ens3
+
+  minio-init:
+    image: minio/mc
+    container_name: ens3_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+      mc mb --ignore-existing minio/ens3
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    networks:
+      - ens3
+
+  mailhog:
+    image: axllent/mailpit:latest
+    container_name: ens3_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - ens3
+
+  server:
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/Server/ENS3.Hosts.Server/Dockerfile
+    container_name: ens3_server
+    restart: unless-stopped
+    ports:
+      - "40010:8080"
+      - "40011:8091"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      mailhog:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      FileStorage__Provider: MinIO
+      FileStorage__MinIO__Endpoint: minio:9000
+      FileStorage__MinIO__AccessKey: ${MINIO_ROOT_USER}
+      FileStorage__MinIO__SecretKey: ${MINIO_ROOT_PASSWORD}
+      FileStorage__MinIO__BucketName: ens3
+      FileStorage__MinIO__UseSSL: "false"
+      ClusteringOptions__Type: localhost
+      StreamSubscriptionStorageOptions__Type: memory
+      ReminderStorageOptions__Type: memory
+      FileDomainOptions__QuarantinedFilesFolder: /app/quarantine
+      FileDomainOptions__ConversionServiceUrl: http://file-conversion-service:8080
+      AUTH_PROVIDER: "keycloak"
+      Keycloak__Url: "http://host.docker.internal:7080"
+      Keycloak__PublicUrl: "http://localhost:7080"
+      Keycloak__Realm: "ens3"
+      Keycloak__AdminUser: "${KEYCLOAK_ADMIN_USER}"
+      Keycloak__AdminPassword: "${KEYCLOAK_ADMIN_PASSWORD}"
+      SEED_DEMO_DATA: "true"
+      Email__Provider: SMTP
+      Email__Smtp__Host: mailhog
+      Email__Smtp__Port: "1025"
+      Email__Smtp__UseTls: "false"
+      Email__Smtp__FromAddress: noreply@ens3.local
+      Email__Smtp__FromName: ENS3 Dev
+      DbOptions__Attachment__ConnectionString: Host=postgres;Port=5432;Database=ens3_attachment;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__AttachmentProjection__ConnectionString: Host=postgres;Port=5432;Database=ens3_attachment_projection;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__AgendaItem__ConnectionString: Host=postgres;Port=5432;Database=ens3_agenda_item;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Confirmation__ConnectionString: Host=postgres;Port=5432;Database=ens3_confirmation;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Decision__ConnectionString: Host=postgres;Port=5432;Database=ens3_decision;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Meeting__ConnectionString: Host=postgres;Port=5432;Database=ens3_meeting;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Minute__ConnectionString: Host=postgres;Port=5432;Database=ens3_minute;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Task__ConnectionString: Host=postgres;Port=5432;Database=ens3_task;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__File__ConnectionString: Host=postgres;Port=5432;Database=ens3_file;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Organization__ConnectionString: Host=postgres;Port=5432;Database=ens3_organization;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__OrganizationProjection__ConnectionString: Host=postgres;Port=5432;Database=ens3_organization_projection;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__SearchProjection__ConnectionString: Host=postgres;Port=5432;Database=ens3_search_projection;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__Tenant__ConnectionString: Host=postgres;Port=5432;Database=ens3_tenant;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__User__ConnectionString: Host=postgres;Port=5432;Database=ens3_user;Username=postgres;Password=${POSTGRES_PASSWORD}
+      DbOptions__UserProjection__ConnectionString: Host=postgres;Port=5432;Database=ens3_user_projection;Username=postgres;Password=${POSTGRES_PASSWORD}
+    volumes:
+      - server_quarantine:/app/quarantine
+    networks:
+      - ens3
+
+  # Workflow Dockerfile does not exist yet.
+  # Copy workflow.Dockerfile from this directory to:
+  #   ${SOURCE_DIR}/Hosts/Workflow/ENS3.Hosts.Workflow/Dockerfile
+  # then this service will build correctly.
+  workflow:
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/Workflow/ENS3.Hosts.Workflow/Dockerfile
+    container_name: ens3_workflow
+    restart: unless-stopped
+    ports:
+      - "40002:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ClusteringOptions__Type: localhost
+      StreamSubscriptionStorageOptions__Type: memory
+      ReminderStorageOptions__Type: memory
+      ClusterOptions__ClusterId: workflow
+      ClusterOptions__ServiceId: workflow
+      Backend__Url: http://server:8080
+      DbOptions__Workflow__ConnectionString: Host=postgres;Port=5432;Database=ens3_workflow;Username=postgres;Password=${POSTGRES_PASSWORD}
+    networks:
+      - ens3
+
+  app:
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/App/ENS3.Hosts.App/ENS3.Hosts.App/Dockerfile
+    container_name: ens3_app
+    restart: unless-stopped
+    ports:
+      - "40000:8080"
+    depends_on:
+      - server
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      GatewayOptions__Url: http://server:8080
+      GatewayOptions__Scope: ${AZURE_AD_SERVER_SCOPE}
+      AUTH_PROVIDER: "keycloak"
+      Keycloak__Url: "http://host.docker.internal:7080"
+      Keycloak__PublicUrl: "http://localhost:7080"
+      Keycloak__Realm: "ens3"
+      Keycloak__ClientId: "ens3-app"
+      Keycloak__ClientSecret: "${KEYCLOAK_CLIENT_SECRET}"
+    networks:
+      - ens3
+
+  admin:
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/Admin/ENS3.Hosts.Admin/Dockerfile
+    container_name: ens3_admin
+    restart: unless-stopped
+    ports:
+      - "40001:8080"
+    depends_on:
+      - server
+      - workflow
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      GatewayOptions__Url: http://server:8080
+      GatewayOptions__Scope: ${AZURE_AD_SERVER_SCOPE}
+      WorkflowEditorOptions__Url: http://workflow:8080
+      AUTH_PROVIDER: "keycloak"
+      Keycloak__Url: "http://host.docker.internal:7080"
+      Keycloak__PublicUrl: "http://localhost:7080"
+      Keycloak__Realm: "ens3"
+      Keycloak__ClientId: "ens3-app"
+      Keycloak__ClientSecret: "${KEYCLOAK_CLIENT_SECRET}"
+    networks:
+      - ens3
+
+  # ENS3.Hosts.UI and its ENS3.UI dependency are being removed in issue #5 (Phase 0).
+  # The Telerik dependency is broken (7.0.0 no longer on feed; 14.0.0 incompatible).
+  # Do not enable until issue #5 is resolved — at that point, delete this service entirely.
+  ui:
+    profiles:
+      - ui
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/UI/ENS3.Hosts.UI/Dockerfile
+      args:
+        TELERIK_USERNAME: ${TELERIK_USERNAME}
+        TELERIK_PASSWORD: ${TELERIK_PASSWORD}
+    container_name: ens3_ui
+    restart: unless-stopped
+    ports:
+      - "40004:8080"
+    depends_on:
+      - server
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      GatewayOptions__Url: http://server:8080
+      GatewayOptions__Scope: ${AZURE_AD_SERVER_SCOPE}
+      USE_MOCK_AUTH: "true"
+    networks:
+      - ens3
+
+  # FileConversionService Dockerfile is currently broken (copy-paste of Server Dockerfile).
+  # Fix the Dockerfile before enabling this service. Enable with:
+  #   docker compose --profile file-conversion up
+  file-conversion-service:
+    profiles:
+      - file-conversion
+    build:
+      context: ${SOURCE_DIR}
+      dockerfile: Hosts/FileConversionService/ENS3.Hosts.FileConversionService/Dockerfile
+    container_name: ens3_file_conversion
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "40003:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    networks:
+      - ens3

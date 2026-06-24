@@ -1,0 +1,16 @@
+CREATE DATABASE ens3_attachment;
+CREATE DATABASE ens3_attachment_projection;
+CREATE DATABASE ens3_agenda_item;
+CREATE DATABASE ens3_confirmation;
+CREATE DATABASE ens3_decision;
+CREATE DATABASE ens3_meeting;
+CREATE DATABASE ens3_minute;
+CREATE DATABASE ens3_task;
+CREATE DATABASE ens3_file;
+CREATE DATABASE ens3_organization;
+CREATE DATABASE ens3_organization_projection;
+CREATE DATABASE ens3_search_projection;
+CREATE DATABASE ens3_tenant;
+CREATE DATABASE ens3_user;
+CREATE DATABASE ens3_user_projection;
+CREATE DATABASE ens3_workflow;

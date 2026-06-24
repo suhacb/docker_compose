@@ -59,10 +59,12 @@ docker compose run --rm npm run [script]
 | Airflow | http://localhost:9030 | Airflow 2.10.2 + PostgreSQL 15 |
 | fooddata MongoDB | localhost:9045 | MongoDB 7 |
 | fooddata Mongo Express | http://localhost:9046 | |
+| GitLab | http://localhost:9060 | GitLab CE (all-in-one) |
+| GitLab SSH | localhost:9062 | Git over SSH |
 
 ### Network Isolation
 
-Each service group runs on its own Docker network (`auth`, `nutrients`, `keycloak`, `fooddata`, `airflow`). Services can only communicate within their network by default.
+Each service group runs on its own Docker network (`auth`, `nutrients`, `keycloak`, `fooddata`, `airflow`, `gitlab`). Services can only communicate within their network by default.
 
 ### PHP Container Pattern
 
