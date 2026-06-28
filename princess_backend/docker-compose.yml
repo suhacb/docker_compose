@@ -5,7 +5,7 @@ volumes:
     db:
     zincdb:
     qdrantdb:
-    miniodb:
+    garagedb:
     onlyofficedb:
 
 services:
@@ -151,25 +151,25 @@ services:
             timeout: 5s
             retries: 5
 
-    minio:
-        image: minio/minio:latest
-        container_name: ${APP_NAME}_minio
+    garage:
+        image: dxflrs/garage:v1.3.1
+        container_name: ${APP_NAME}_garage
         restart: no
-        command: server /data --console-address ":9001"
         environment:
-            MINIO_ROOT_USER: '${MINIO_ROOT_USER}'
-            MINIO_ROOT_PASSWORD: '${MINIO_ROOT_PASSWORD}'
+            GARAGE_RPC_SECRET: '${GARAGE_RPC_SECRET}'
+            GARAGE_REGION: '${GARAGE_REGION}'
         ports:
-            - "${MINIO_API_PORT}:9000"
-            - "${MINIO_CONSOLE_PORT}:9001"
+            - "${GARAGE_S3_PORT}:3900"
+            - "${GARAGE_ADMIN_PORT}:3903"
         volumes:
-            - miniodb:/data
+            - garagedb:/var/lib/garage
+            - ./garage/garage.toml:/etc/garage.toml
         networks:
             - ${NETWORK}
         healthcheck:
-            test: ["CMD-SHELL", "mc ready local || exit 1"]
-            interval: 10s
-            timeout: 5s
+            test: ["CMD-SHELL", "wget -qO- http://localhost:3903/health | grep -q ok || exit 1"]
+            interval: 15s
+            timeout: 10s
             retries: 5
 
     onlyoffice:

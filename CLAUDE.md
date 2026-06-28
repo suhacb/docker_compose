@@ -66,8 +66,8 @@ docker compose run --rm npm run [script]
 | princess_backend Zinc Search | http://localhost:10107 | |
 | princess_backend Qdrant | http://localhost:10108 | vector DB |
 | princess_backend Redis | localhost:10109 | |
-| princess_backend MinIO API | localhost:10110 | S3-compatible object storage |
-| princess_backend MinIO Console | http://localhost:10111 | |
+| princess_backend Garage S3 API | localhost:10110 | S3-compatible object storage (Garage) |
+| princess_backend Garage Admin API | http://localhost:10111 | |
 | princess_backend OnlyOffice | http://localhost:10112 | OnlyOffice Document Server |
 
 ### Network Isolation
