@@ -61,6 +61,14 @@ docker compose run --rm npm run [script]
 | fooddata Mongo Express | http://localhost:9046 | |
 | GitLab | http://localhost:9060 | GitLab CE (all-in-one) |
 | GitLab SSH | localhost:9062 | Git over SSH |
+| princess_backend | http://localhost:10105 | PHP 8.3-FPM + Nginx + PostgreSQL 17 |
+| princess_backend pgAdmin | http://localhost:10106 | |
+| princess_backend Zinc Search | http://localhost:10107 | |
+| princess_backend Qdrant | http://localhost:10108 | vector DB |
+| princess_backend Redis | localhost:10109 | |
+| princess_backend MinIO API | localhost:10110 | S3-compatible object storage |
+| princess_backend MinIO Console | http://localhost:10111 | |
+| princess_backend OnlyOffice | http://localhost:10112 | OnlyOffice Document Server |
 
 ### Network Isolation
 
