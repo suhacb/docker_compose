@@ -14,6 +14,35 @@ services:
         networks:
             - ${NETWORK}
 
+    app-e2e:
+        build: ./angular-e2e
+        container_name: ${APP_NAME}_app_e2e
+        ports:
+            - '10101:4201'
+        volumes:
+            - '${CODE_DIR}:${APP_DIR}'
+        networks:
+            - ${NETWORK}
+
+    playwright:
+        build:
+            context: ./playwright
+            dockerfile: Dockerfile
+            args:
+                - workdir=${APP_DIR}
+        container_name: ${APP_NAME}_playwright
+        volumes:
+            - ${CODE_DIR}:${APP_DIR}
+        environment:
+            - E2E_TOKEN=${E2E_TOKEN}
+            - E2E_BACKEND_URL=${E2E_BACKEND_URL}
+            - E2E_BASE_URL=${E2E_BASE_URL}
+            - CHROME_BIN=/usr/bin/chromium
+        depends_on:
+            - app-e2e
+        networks:
+            - ${NETWORK}
+
     npm:
         build:
             context: ./npm

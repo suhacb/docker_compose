@@ -33,6 +33,8 @@ services:
             POSTGRES_DB: '${POSTGRES_DB}'
             POSTGRES_USER: '${POSTGRES_USER}'
             POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+            POSTGRES_TEST_DB: '${POSTGRES_TEST_DB}'
+            POSTGRES_E2E_DB: '${POSTGRES_E2E_DB}'
             TZ: UTC
             PGTZ: UTC
         volumes:
